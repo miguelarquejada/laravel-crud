@@ -20,16 +20,15 @@ class TaskController extends Controller
 
     public function addAction(Request $request)
     {
-        if($request->filled('title')) {
-            $title = $request->input('title');
-            DB::insert("insert into tasks (title) values (:title)", [
-                'title' => $title
-            ]);
+        $request->validate([
+            'title' => ['required','string']
+        ]);
+        $title = $request->input('title');
+        DB::insert("insert into tasks (title) values (:title)", [
+            'title' => $title
+        ]);
 
-            return redirect()->route('tasks.list');
-        }
-
-        return redirect()->route('tasks.add')->with('warning', 'É necessário preencher o título');
+        return redirect()->route('tasks.list');
     }
 
     public function edit($id)
@@ -44,21 +43,19 @@ class TaskController extends Controller
 
     public function editAction(Request $request, $id)
     {
-        if($request->filled('title')) {
-            $task = DB::select("select * from tasks where id = ?", [$id]);
+        $request->validate([
+            'title' => ['required','string']
+        ]);
 
-            if(count($task) > 0) {
-                $title = $request->input('title');
-                DB::insert("update tasks set title = :title where id = :id", [
-                    'title' => $title,
-                    'id' => $id
-                ]);
-                
-            }
-            return redirect()->route('tasks.list');
-        }
+        $task = DB::select("select * from tasks where id = ?", [$id]);
 
-        return redirect()->route('tasks.edit', ['id' => $id])->with('warning', 'É necessário preencher o título');
+        $title = $request->input('title');
+        DB::insert("update tasks set title = :title where id = :id", [
+            'title' => $title,
+            'id' => $id
+        ]);
+        
+        return redirect()->route('tasks.list');
     }
 
     public function delete($id)
