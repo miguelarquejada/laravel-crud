@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+
+use App\Models\Task;
 
 class TaskController extends Controller
 {
     public function list()
     {
-        $tasks = DB::select('select * from tasks');
+        $tasks = Task::all();
         return view('tasks.list', ['tasks' => $tasks]);
     }
 
@@ -23,19 +24,20 @@ class TaskController extends Controller
         $request->validate([
             'title' => ['required','string']
         ]);
+
         $title = $request->input('title');
-        DB::insert("insert into tasks (title) values (:title)", [
-            'title' => $title
-        ]);
+        $task = new Task();
+        $task->title = $title;
+        $task->save();
 
         return redirect()->route('tasks.list');
     }
 
     public function edit($id)
     {
-        $task = DB::select("select * from tasks where id = :id", ['id' => $id]);
+        $task = Task::find($id);
         if($task) {
-            return view('tasks.edit', ['task' => $task[0]]);
+            return view('tasks.edit', ['task' => $task]);
         }
         
         return redirect()->route('tasks.list');
@@ -47,26 +49,28 @@ class TaskController extends Controller
             'title' => ['required','string']
         ]);
 
-        $task = DB::select("select * from tasks where id = ?", [$id]);
-
         $title = $request->input('title');
-        DB::insert("update tasks set title = :title where id = :id", [
-            'title' => $title,
-            'id' => $id
-        ]);
+        // $task = Task::find($id);
+        // $task->title = $title;
+        // $task->save();
+        Task::find($id)->update(['title' => $title]);
         
         return redirect()->route('tasks.list');
     }
 
     public function delete($id)
     {
-        DB::delete('delete from tasks where id = ?', [$id]);
+        Task::find($id)->delete();
         return redirect()->route('tasks.list');
     }
 
     public function check($id)
     {
-        DB::update('update tasks set checked = 1 - checked where id = ?', [$id]);
+        $task = Task::find($id);
+        if($task) {
+            $task->checked = 1 - $task->checked;
+            $task->save();
+        }
         return redirect()->route('tasks.list');
     }
 }
